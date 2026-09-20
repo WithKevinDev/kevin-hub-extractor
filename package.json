@@ -10,6 +10,6 @@
     "fflate": "^0.8.2"
   },
   "devDependencies": {
-    "wrangler": "^3.78.0"
+    "wrangler": "^4.0.0"
   }
 }
