@@ -3,173 +3,392 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>🔥 Extract Sources — Send Everything to Discord</title>
+<title>🔥 EXTRACT SOURCES — Send Everything to Discord</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
+
   :root {
-    --bg: #0a0a0f;
-    --card: #12121a;
-    --card2: #1a1a25;
-    --border: #2a2a3a;
-    --accent: #ff4d4d;
-    --accent2: #ff6b35;
-    --text: #e8e8f0;
-    --muted: #8a8a9a;
-    --success: #22c55e;
-    --error: #ef4444;
+    --bg: #05050a;
+    --bg2: #0a0208;
+    --card: rgba(20, 8, 12, 0.7);
+    --card2: rgba(30, 10, 15, 0.6);
+    --border: rgba(255, 60, 60, 0.15);
+    --border-hot: rgba(255, 60, 60, 0.5);
+    --accent: #ff1e3c;
+    --accent2: #ff4d2e;
+    --accent3: #ffb84d;
+    --text: #f5f0f0;
+    --muted: #9a8a8f;
+    --success: #22ff88;
+    --error: #ff3355;
+    --glow: 0 0 40px rgba(255, 30, 60, 0.4);
   }
+
+  html { scroll-behavior: smooth; }
+
   body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: radial-gradient(ellipse at top, #1a0a0a 0%, var(--bg) 50%);
+    background: var(--bg);
     color: var(--text);
     min-height: 100vh;
     padding: 20px;
     line-height: 1.6;
+    overflow-x: hidden;
+    position: relative;
   }
-  .container { max-width: 720px; margin: 0 auto; }
-  header { text-align: center; margin-bottom: 40px; padding-top: 20px; }
+
+  /* Animated gradient background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 20% 0%, rgba(255, 30, 60, 0.18), transparent 60%),
+      radial-gradient(ellipse 60% 50% at 80% 100%, rgba(255, 77, 46, 0.15), transparent 60%),
+      radial-gradient(ellipse 50% 40% at 50% 50%, rgba(255, 184, 77, 0.05), transparent 70%);
+    animation: bgShift 12s ease-in-out infinite alternate;
+    z-index: -2;
+  }
+
+  @keyframes bgShift {
+    0% { transform: scale(1) translate(0, 0); opacity: 0.9; }
+    50% { transform: scale(1.1) translate(-2%, 2%); opacity: 1; }
+    100% { transform: scale(1) translate(2%, -2%); opacity: 0.9; }
+  }
+
+  /* Floating orbs */
+  .orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.35;
+    z-index: -1;
+    pointer-events: none;
+    animation: float 20s ease-in-out infinite;
+  }
+  .orb-1 { width: 400px; height: 400px; background: #ff1e3c; top: -100px; left: -100px; }
+  .orb-2 { width: 350px; height: 350px; background: #ff4d2e; bottom: -100px; right: -100px; animation-delay: -5s; }
+  .orb-3 { width: 300px; height: 300px; background: #ffb84d; top: 50%; left: 50%; animation-delay: -10s; opacity: 0.15; }
+
+  @keyframes float {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(50px, -30px) scale(1.1); }
+    66% { transform: translate(-30px, 50px) scale(0.95); }
+  }
+
+  /* Grid overlay */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255, 30, 60, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 30, 60, 0.03) 1px, transparent 1px);
+    background-size: 50px 50px;
+    z-index: -1;
+    pointer-events: none;
+    mask-image: radial-gradient(ellipse at center, black 40%, transparent 80%);
+  }
+
+  .container { max-width: 760px; margin: 0 auto; position: relative; z-index: 1; }
+
+  /* Header */
+  header { text-align: center; margin-bottom: 40px; padding-top: 30px; }
+
   h1 {
-    font-size: clamp(28px, 6vw, 48px);
+    font-size: clamp(32px, 7vw, 56px);
     font-weight: 900;
-    background: linear-gradient(135deg, var(--accent), var(--accent2), #ffb84d);
+    letter-spacing: -1px;
+    background: linear-gradient(135deg, #ff1e3c 0%, #ff4d2e 40%, #ffb84d 70%, #ff1e3c 100%);
+    background-size: 300% 300%;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    margin-bottom: 12px;
+    margin-bottom: 14px;
+    animation: gradientFlow 6s ease infinite;
+    filter: drop-shadow(0 0 30px rgba(255, 30, 60, 0.5));
+    position: relative;
   }
-  .subtitle { color: var(--muted); font-size: 15px; }
+
+  @keyframes gradientFlow {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .subtitle .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--success);
+    box-shadow: 0 0 12px var(--success);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.85); }
+  }
+
+  /* Card */
   .card {
     background: var(--card);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 24px;
-    margin-bottom: 20px;
-    box-shadow: 0 8px 32px rgba(255, 77, 77, 0.05);
+    border-radius: 20px;
+    padding: 28px;
+    margin-bottom: 22px;
+    box-shadow:
+      0 20px 60px rgba(0, 0, 0, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05),
+      0 0 0 1px rgba(255, 30, 60, 0.05);
+    position: relative;
+    overflow: hidden;
+    animation: cardIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
   }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 100%; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    animation: scanLine 4s linear infinite;
+  }
+
+  @keyframes scanLine {
+    0% { left: -100%; }
+    100% { left: 100%; }
+  }
+
+  @keyframes cardIn {
+    from { opacity: 0; transform: translateY(30px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
   label {
     display: block;
-    font-size: 13px;
-    font-weight: 600;
+    font-size: 12px;
+    font-weight: 700;
     color: var(--muted);
     margin-bottom: 8px;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 1.5px;
+    transition: color 0.3s;
   }
+
+  .field { margin-bottom: 20px; }
+  .field:focus-within label { color: var(--accent); }
+
   input[type="text"], input[type="number"] {
     width: 100%;
-    padding: 14px 16px;
+    padding: 15px 18px;
     background: var(--card2);
     border: 1px solid var(--border);
-    border-radius: 10px;
+    border-radius: 12px;
     color: var(--text);
     font-size: 14px;
     font-family: inherit;
-    transition: border-color 0.2s;
+    transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+    outline: none;
   }
-  input:focus { outline: none; border-color: var(--accent); }
-  input::placeholder { color: #555; }
-  .field { margin-bottom: 18px; }
 
+  input[type="text"]:hover, input[type="number"]:hover {
+    border-color: rgba(255, 30, 60, 0.35);
+    background: rgba(40, 15, 20, 0.6);
+  }
+
+  input[type="text"]:focus, input[type="number"]:focus {
+    border-color: var(--accent);
+    background: rgba(50, 15, 20, 0.7);
+    box-shadow: 0 0 0 4px rgba(255, 30, 60, 0.15), 0 0 30px rgba(255, 30, 60, 0.2);
+    transform: translateY(-1px);
+  }
+
+  input::placeholder { color: #5a4a50; }
+
+  /* Dropzone */
   .dropzone {
-    border: 2px dashed var(--border);
-    border-radius: 12px;
-    padding: 40px 20px;
+    border: 2px dashed rgba(255, 30, 60, 0.3);
+    border-radius: 14px;
+    padding: 45px 20px;
     text-align: center;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
     background: var(--card2);
-  }
-  .dropzone:hover, .dropzone.dragover {
-    border-color: var(--accent);
-    background: rgba(255, 77, 77, 0.05);
-  }
-  .dropzone .icon { font-size: 40px; margin-bottom: 10px; }
-  .dropzone .text { color: var(--muted); font-size: 14px; }
-  .dropzone .filename {
-    color: var(--accent);
-    font-weight: 600;
-    margin-top: 10px;
-    word-break: break-all;
+    position: relative;
+    overflow: hidden;
   }
 
-  .options { display: flex; gap: 20px; flex-wrap: wrap; align-items: center; }
+  .dropzone::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at center, rgba(255, 30, 60, 0.15), transparent 70%);
+    opacity: 0;
+    transition: opacity 0.4s;
+  }
+
+  .dropzone:hover, .dropzone.dragover {
+    border-color: var(--accent);
+    border-style: solid;
+    background: rgba(50, 15, 20, 0.6);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 40px rgba(255, 30, 60, 0.25);
+  }
+
+  .dropzone:hover::before, .dropzone.dragover::before { opacity: 1; }
+
+  .dropzone.dragover {
+    transform: scale(1.02);
+    animation: shake 0.4s ease;
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: scale(1.02) rotate(0); }
+    25% { transform: scale(1.02) rotate(-1deg); }
+    75% { transform: scale(1.02) rotate(1deg); }
+  }
+
+  .dropzone .icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+    display: inline-block;
+    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    filter: drop-shadow(0 0 20px rgba(255, 30, 60, 0.6));
+  }
+
+  .dropzone:hover .icon { transform: scale(1.15) rotate(-5deg); }
+
+  .dropzone .text { color: var(--muted); font-size: 14px; position: relative; }
+
+  .dropzone .filename {
+    color: var(--accent);
+    font-weight: 700;
+    margin-top: 12px;
+    word-break: break-all;
+    font-size: 14px;
+    animation: fadeIn 0.4s ease;
+    position: relative;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Options */
+  .options { display: flex; gap: 24px; flex-wrap: wrap; align-items: center; }
+
   .checkbox-label {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     cursor: pointer;
     font-size: 14px;
     text-transform: none;
     color: var(--text);
     letter-spacing: 0;
+    font-weight: 500;
+    user-select: none;
+    transition: color 0.2s;
   }
+
+  .checkbox-label:hover { color: var(--accent); }
+
   input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
+    width: 20px;
+    height: 20px;
     accent-color: var(--accent);
     cursor: pointer;
+    transition: transform 0.2s;
   }
+
+  input[type="checkbox"]:hover { transform: scale(1.1); }
+
+  /* Buttons */
+  .btn-row { display: flex; gap: 12px; margin-top: 8px; }
 
   button {
-    width: 100%;
-    padding: 16px;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    flex: 1;
+    padding: 18px;
     border: none;
-    border-radius: 12px;
+    border-radius: 14px;
     color: white;
-    font-size: 16px;
-    font-weight: 700;
+    font-size: 15px;
+    font-weight: 800;
     cursor: pointer;
-    transition: transform 0.15s, box-shadow 0.15s;
+    transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
     text-transform: uppercase;
-    letter-spacing: 1px;
-  }
-  button:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(255, 77, 77, 0.4);
-  }
-  button:disabled { opacity: 0.5; cursor: not-allowed; }
-
-  .progress-section { display: none; margin-top: 24px; }
-  .progress-section.active { display: block; }
-  .progress-bar {
-    height: 8px;
-    background: var(--card2);
-    border-radius: 4px;
+    letter-spacing: 1.5px;
+    position: relative;
     overflow: hidden;
-    margin-bottom: 12px;
+    font-family: inherit;
   }
-  .progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--accent), var(--accent2));
-    width: 0%;
-    transition: width 0.3s;
-    border-radius: 4px;
+
+  #sendBtn {
+    background: linear-gradient(135deg, #ff1e3c, #ff4d2e);
+    box-shadow: 0 8px 30px rgba(255, 30, 60, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
   }
-  .progress-stats {
-    display: flex;
-    justify-content: space-between;
-    font-size: 13px;
-    color: var(--muted);
-    margin-bottom: 12px;
+
+  #sendBtn::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.6s;
   }
-  .log {
-    max-height: 300px;
-    overflow-y: auto;
-    background: #08080c;
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 12px;
-    font-family: 'SF Mono', Menlo, monospace;
-    font-size: 12px;
-    line-height: 1.7;
+
+  #sendBtn:hover:not(:disabled)::before { left: 100%; }
+
+  #sendBtn:hover:not(:disabled) {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 40px rgba(255, 30, 60, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.3);
   }
-  .log-entry { padding: 3px 0; word-break: break-all; }
-  .log-entry.sent { color: var(--success); }
-  .log-entry.failed { color: var(--error); }
-  .log-entry.info { color: #6b9fff; }
-  .log-entry.warn { color: #ffb84d; }
+
+  #sendBtn:active:not(:disabled) { transform: translateY(-1px); }
+
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  #stopBtn {
+    flex: 0 0 auto;
+    min-width: 140px;
+    background: linear-gradient(135deg, #2a0a0f, #3a0f15);
+    border: 1px solid rgba(255, 30, 60, 0.4);
+    color: #ff6b7a;
+    display: none;
+  }
+
+  #stopBtn.visible { display: block; animation: stopIn 0.3s ease; }
+
+  @keyframes stopIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  #stopBtn:hover {
+    background: linear-gradient(135deg, #ff1e3c, #a01020);
+    color: white;
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(255, 30, 60, 0.5);
+    border-color: var(--accent);
+  }
+
+  /* Progress */
+  .progress-section { display: none; margin-top: 24px; }
+  .progress-section.active { display: block; animation: fadeIn 0.4s ease; }
 
   .stats-grid {
     display: grid;
@@ -177,60 +396,212 @@
     gap: 12px;
     margin-bottom: 16px;
   }
+
   .stat {
     background: var(--card2);
     border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 12px;
+    border-radius: 12px;
+    padding: 14px;
     text-align: center;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
   }
-  .stat .value { font-size: 22px; font-weight: 800; }
-  .stat .label { font-size: 11px; color: var(--muted); text-transform: uppercase; }
-  .stat.sent .value { color: var(--success); }
-  .stat.failed .value { color: var(--error); }
 
+  .stat::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .stat:hover { transform: translateY(-3px); border-color: var(--border-hot); }
+  .stat:hover::before { opacity: 1; }
+
+  .stat .value {
+    font-size: 24px;
+    font-weight: 900;
+    font-variant-numeric: tabular-nums;
+    transition: transform 0.2s;
+  }
+  .stat .label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+  .stat.sent .value { color: var(--success); text-shadow: 0 0 20px rgba(34, 255, 136, 0.5); }
+  .stat.failed .value { color: var(--error); text-shadow: 0 0 20px rgba(255, 51, 85, 0.5); }
+
+  .progress-bar {
+    height: 10px;
+    background: var(--card2);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 12px;
+    position: relative;
+    border: 1px solid var(--border);
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ff1e3c, #ff4d2e, #ffb84d, #ff4d2e, #ff1e3c);
+    background-size: 200% 100%;
+    width: 0%;
+    transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    border-radius: 6px;
+    animation: shimmer 2s linear infinite;
+    box-shadow: 0 0 20px rgba(255, 30, 60, 0.7);
+  }
+
+  @keyframes shimmer {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
+  }
+
+  .progress-stats {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 12px;
+    font-family: 'SF Mono', Menlo, monospace;
+  }
+
+  .log {
+    max-height: 320px;
+    overflow-y: auto;
+    background: #050208;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+    font-family: 'SF Mono', Menlo, monospace;
+    font-size: 12px;
+    line-height: 1.8;
+  }
+
+  .log::-webkit-scrollbar { width: 8px; }
+  .log::-webkit-scrollbar-track { background: transparent; }
+  .log::-webkit-scrollbar-thumb { background: rgba(255, 30, 60, 0.3); border-radius: 4px; }
+  .log::-webkit-scrollbar-thumb:hover { background: rgba(255, 30, 60, 0.5); }
+
+  .log-entry {
+    padding: 3px 0;
+    word-break: break-all;
+    animation: logIn 0.3s ease;
+  }
+
+  @keyframes logIn {
+    from { opacity: 0; transform: translateX(-8px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .log-entry.sent { color: var(--success); }
+  .log-entry.failed { color: var(--error); }
+  .log-entry.info { color: #6b9fff; }
+  .log-entry.warn { color: var(--accent3); }
+
+  /* Features */
   .features {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: 12px;
     margin-top: 20px;
   }
-  .feature {
-    background: var(--card2);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 14px;
-    text-align: center;
-    font-size: 13px;
-  }
-  .feature .emoji { font-size: 22px; display: block; margin-bottom: 4px; }
 
-  .faq { margin-top: 30px; }
-  .faq h2 { font-size: 20px; margin-bottom: 16px; text-align: center; }
+  .feature {
+    background: var(--card);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 12px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+    transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+    cursor: default;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .feature:hover {
+    transform: translateY(-6px) scale(1.03);
+    border-color: var(--border-hot);
+    box-shadow: 0 15px 40px rgba(255, 30, 60, 0.25);
+  }
+
+  .feature .emoji {
+    font-size: 26px;
+    display: block;
+    margin-bottom: 8px;
+    transition: transform 0.4s;
+  }
+
+  .feature:hover .emoji { transform: scale(1.2) rotate(-8deg); }
+
+  /* FAQ */
+  .faq { margin-top: 40px; }
+
+  .faq h2 {
+    font-size: 22px;
+    margin-bottom: 20px;
+    text-align: center;
+    color: var(--text);
+    letter-spacing: 0.5px;
+  }
+
   details {
     background: var(--card);
+    backdrop-filter: blur(20px);
     border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 14px 18px;
+    border-radius: 12px;
+    padding: 16px 20px;
     margin-bottom: 10px;
+    transition: all 0.3s;
   }
+
+  details:hover { border-color: var(--border-hot); }
+
+  details[open] {
+    border-color: var(--border-hot);
+    box-shadow: 0 10px 30px rgba(255, 30, 60, 0.15);
+  }
+
   details summary {
     cursor: pointer;
-    font-weight: 600;
+    font-weight: 700;
     font-size: 14px;
     list-style: none;
+    transition: color 0.2s;
+    color: var(--text);
   }
+
   details summary::-webkit-details-marker { display: none; }
   details summary::before { content: '❓ '; }
   details[open] summary::before { content: '💡 '; }
-  details p { margin-top: 10px; color: var(--muted); font-size: 13px; }
+  details:hover summary { color: var(--accent); }
+  details p { margin-top: 12px; color: var(--muted); font-size: 13px; animation: fadeIn 0.3s ease; }
+
+  /* Particle canvas */
+  #particles {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+  }
 </style>
 </head>
 <body>
+<canvas id="particles"></canvas>
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+
 <div class="container">
   <header>
     <h1>🔥 EXTRACT SOURCES</h1>
-    <p class="subtitle">⚡ Extract ALL files from archives & send to Discord</p>
+    <p class="subtitle">
+      <span class="dot"></span>
+      Online · Extract ALL files · Send to Discord
+    </p>
   </header>
 
   <div class="card">
@@ -240,7 +611,7 @@
     </div>
 
     <div class="field">
-      <label>Archive File (.zip, .rar, .7z, etc.)</label>
+      <label>Archive File</label>
       <div class="dropzone" id="dropzone">
         <div class="icon">📦</div>
         <div class="text" id="dropText">Click or drag & drop your archive here</div>
@@ -261,7 +632,10 @@
       </label>
     </div>
 
-    <button id="sendBtn" disabled>🚀 EXTRACT & SEND</button>
+    <div class="btn-row">
+      <button id="sendBtn" disabled>🚀 EXTRACT & SEND</button>
+      <button id="stopBtn">⛔ STOP</button>
+    </div>
 
     <div class="progress-section" id="progressSection">
       <div class="stats-grid">
@@ -283,7 +657,7 @@
     <div class="feature"><span class="emoji">🔄</span>Nested Archives</div>
     <div class="feature"><span class="emoji">🚫</span>Skip Duplicates</div>
     <div class="feature"><span class="emoji">⚡</span>0.30s / File</div>
-    <div class="feature"><span class="emoji">🚀</span>24/7 Online</div>
+    <div class="feature"><span class="emoji">🛑</span>Stop Anytime</div>
   </div>
 
   <div class="faq">
@@ -297,8 +671,8 @@
       <p>1. Enter your Discord Webhook URL<br>2. Upload a ZIP file<br>3. Click "EXTRACT & SEND"<br>4. Files are sent one by one with a 0.30s delay.</p>
     </details>
     <details>
-      <summary>What file types are supported?</summary>
-      <p>ALL file types are extracted and sent — .txt, .lua, .js, .py, .json, images, executables, anything inside the archive.</p>
+      <summary>Can I stop midway?</summary>
+      <p>Yes! Click the red "STOP" button at any time. The current file will finish sending, then the process halts immediately.</p>
     </details>
     <details>
       <summary>What about duplicate files?</summary>
@@ -306,7 +680,7 @@
     </details>
     <details>
       <summary>Is there a file size limit?</summary>
-      <p>Maximum archive size is ~100MB (Cloudflare Worker limit). Individual files must be under 25MB (Discord limit). For larger archives, split them up.</p>
+      <p>Maximum archive size is ~100MB (Cloudflare Worker limit). Individual files must be under 25MB (Discord limit).</p>
     </details>
     <details>
       <summary>Is this service free?</summary>
@@ -316,12 +690,64 @@
 </div>
 
 <script>
+  // ============ PARTICLE BACKGROUND ============
+  const canvas = document.getElementById('particles');
+  const ctx = canvas.getContext('2d');
+  let particles = [];
+
+  function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+
+  class Particle {
+    constructor() {
+      this.reset();
+      this.y = Math.random() * canvas.height;
+    }
+    reset() {
+      this.x = Math.random() * canvas.width;
+      this.y = canvas.height + 10;
+      this.size = Math.random() * 2 + 1;
+      this.speed = Math.random() * 0.5 + 0.2;
+      this.opacity = Math.random() * 0.5 + 0.2;
+      this.drift = (Math.random() - 0.5) * 0.3;
+    }
+    update() {
+      this.y -= this.speed;
+      this.x += this.drift;
+      if (this.y < -10) this.reset();
+    }
+    draw() {
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255, 60, 60, ${this.opacity})`;
+      ctx.shadowBlur = 8;
+      ctx.shadowColor = 'rgba(255, 30, 60, 0.8)';
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+  }
+
+  for (let i = 0; i < 60; i++) particles.push(new Particle());
+
+  function animateParticles() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles.forEach(p => { p.update(); p.draw(); });
+    requestAnimationFrame(animateParticles);
+  }
+  animateParticles();
+
+  // ============ ELEMENTS ============
   const dropzone = document.getElementById('dropzone');
   const fileInput = document.getElementById('fileInput');
   const fileName = document.getElementById('fileName');
   const dropText = document.getElementById('dropText');
   const webhookInput = document.getElementById('webhook');
   const sendBtn = document.getElementById('sendBtn');
+  const stopBtn = document.getElementById('stopBtn');
   const progressSection = document.getElementById('progressSection');
   const progressFill = document.getElementById('progressFill');
   const progressText = document.getElementById('progressText');
@@ -332,13 +758,18 @@
   const statFailed = document.getElementById('statFailed');
 
   let selectedFile = null;
+  let currentAbortController = null;
+  let startTime = 0;
+  let isStopped = false;
 
+  // ============ WEBHOOK PERSISTENCE ============
   webhookInput.value = localStorage.getItem('webhook') || '';
   webhookInput.addEventListener('input', () => {
     localStorage.setItem('webhook', webhookInput.value);
     updateButton();
   });
 
+  // ============ FILE DROP ============
   dropzone.addEventListener('click', () => fileInput.click());
   dropzone.addEventListener('dragover', (e) => {
     e.preventDefault();
@@ -381,11 +812,29 @@
     log.scrollTop = log.scrollHeight;
   }
 
+  // ============ STOP HANDLER ============
+  stopBtn.addEventListener('click', () => {
+    if (currentAbortController) {
+      isStopped = true;
+      currentAbortController.abort();
+      addLog('⛔ Stopped by user', 'warn');
+      stopBtn.classList.remove('visible');
+      stopBtn.textContent = '⛔ STOP';
+    }
+  });
+
+  // ============ SEND HANDLER ============
   sendBtn.addEventListener('click', async () => {
     if (!selectedFile || !webhookInput.value) return;
 
+    isStopped = false;
+    currentAbortController = new AbortController();
+
     sendBtn.disabled = true;
     sendBtn.textContent = '⏳ PROCESSING...';
+    stopBtn.classList.add('visible');
+    stopBtn.textContent = '⛔ STOP';
+
     progressSection.classList.add('active');
     log.innerHTML = '';
     progressFill.style.width = '0%';
@@ -405,6 +854,7 @@
       const res = await fetch('/extract', {
         method: 'POST',
         body: formData,
+        signal: currentAbortController.signal,
       });
 
       if (!res.ok) {
@@ -435,16 +885,20 @@
         }
       }
 
-      addLog('✅ Done!', 'info');
+      if (!isStopped) addLog('✅ Done!', 'info');
     } catch (err) {
-      addLog(`❌ Error: ${err.message}`, 'failed');
+      if (err.name === 'AbortError') {
+        addLog('⛔ Stream cancelled', 'warn');
+      } else {
+        addLog(`❌ Error: ${err.message}`, 'failed');
+      }
     } finally {
       sendBtn.disabled = false;
       sendBtn.textContent = '🚀 EXTRACT & SEND';
+      stopBtn.classList.remove('visible');
+      currentAbortController = null;
     }
   });
-
-  let startTime = 0;
 
   function handleMessage(msg) {
     if (msg.type === 'start') {
