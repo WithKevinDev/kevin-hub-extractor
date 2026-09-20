@@ -1,4 +1,4 @@
-name = "extract-sources"
+name = "kevin-hub-extractor"
 main = "worker.js"
 compatibility_date = "2024-01-01"
 
