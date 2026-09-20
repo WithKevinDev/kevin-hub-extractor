@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>🔥 Extract Sources — Send Everything to Discord</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0a0a0f;
+    --card: #12121a;
+    --card2: #1a1a25;
+    --border: #2a2a3a;
+    --accent: #ff4d4d;
+    --accent2: #ff6b35;
+    --text: #e8e8f0;
+    --muted: #8a8a9a;
+    --success: #22c55e;
+    --error: #ef4444;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: radial-gradient(ellipse at top, #1a0a0a 0%, var(--bg) 50%);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 20px;
+    line-height: 1.6;
+  }
+  .container { max-width: 720px; margin: 0 auto; }
+  header { text-align: center; margin-bottom: 40px; padding-top: 20px; }
+  h1 {
+    font-size: clamp(28px, 6vw, 48px);
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--accent), var(--accent2), #ffb84d);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 12px;
+  }
+  .subtitle { color: var(--muted); font-size: 15px; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 32px rgba(255, 77, 77, 0.05);
+  }
+  label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  input[type="text"], input[type="number"] {
+    width: 100%;
+    padding: 14px 16px;
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-size: 14px;
+    font-family: inherit;
+    transition: border-color 0.2s;
+  }
+  input:focus { outline: none; border-color: var(--accent); }
+  input::placeholder { color: #555; }
+  .field { margin-bottom: 18px; }
+
+  .dropzone {
+    border: 2px dashed var(--border);
+    border-radius: 12px;
+    padding: 40px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: var(--card2);
+  }
+  .dropzone:hover, .dropzone.dragover {
+    border-color: var(--accent);
+    background: rgba(255, 77, 77, 0.05);
+  }
+  .dropzone .icon { font-size: 40px; margin-bottom: 10px; }
+  .dropzone .text { color: var(--muted); font-size: 14px; }
+  .dropzone .filename {
+    color: var(--accent);
+    font-weight: 600;
+    margin-top: 10px;
+    word-break: break-all;
+  }
+
+  .options { display: flex; gap: 20px; flex-wrap: wrap; align-items: center; }
+  .checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    text-transform: none;
+    color: var(--text);
+    letter-spacing: 0;
+  }
+  input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+
+  button {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  button:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(255, 77, 77, 0.4);
+  }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .progress-section { display: none; margin-top: 24px; }
+  .progress-section.active { display: block; }
+  .progress-bar {
+    height: 8px;
+    background: var(--card2);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    width: 0%;
+    transition: width 0.3s;
+    border-radius: 4px;
+  }
+  .progress-stats {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+  .log {
+    max-height: 300px;
+    overflow-y: auto;
+    background: #08080c;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    font-family: 'SF Mono', Menlo, monospace;
+    font-size: 12px;
+    line-height: 1.7;
+  }
+  .log-entry { padding: 3px 0; word-break: break-all; }
+  .log-entry.sent { color: var(--success); }
+  .log-entry.failed { color: var(--error); }
+  .log-entry.info { color: #6b9fff; }
+  .log-entry.warn { color: #ffb84d; }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .stat {
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    text-align: center;
+  }
+  .stat .value { font-size: 22px; font-weight: 800; }
+  .stat .label { font-size: 11px; color: var(--muted); text-transform: uppercase; }
+  .stat.sent .value { color: var(--success); }
+  .stat.failed .value { color: var(--error); }
+
+  .features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    margin-top: 20px;
+  }
+  .feature {
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    text-align: center;
+    font-size: 13px;
+  }
+  .feature .emoji { font-size: 22px; display: block; margin-bottom: 4px; }
+
+  .faq { margin-top: 30px; }
+  .faq h2 { font-size: 20px; margin-bottom: 16px; text-align: center; }
+  details {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin-bottom: 10px;
+  }
+  details summary {
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    list-style: none;
+  }
+  details summary::-webkit-details-marker { display: none; }
+  details summary::before { content: '❓ '; }
+  details[open] summary::before { content: '💡 '; }
+  details p { margin-top: 10px; color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>🔥 EXTRACT SOURCES</h1>
+    <p class="subtitle">⚡ Extract ALL files from archives & send to Discord</p>
+  </header>
+
+  <div class="card">
+    <div class="field">
+      <label for="webhook">Discord Webhook URL</label>
+      <input type="text" id="webhook" placeholder="https://discord.com/api/webhooks/..." />
+    </div>
+
+    <div class="field">
+      <label>Archive File (.zip, .rar, .7z, etc.)</label>
+      <div class="dropzone" id="dropzone">
+        <div class="icon">📦</div>
+        <div class="text" id="dropText">Click or drag & drop your archive here</div>
+        <div class="filename" id="fileName"></div>
+        <input type="file" id="fileInput" accept=".zip,.rar,.7z,.tar,.gz" style="display:none" />
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Delay per file (ms)</label>
+      <input type="number" id="delay" value="300" min="100" max="5000" />
+    </div>
+
+    <div class="field options">
+      <label class="checkbox-label">
+        <input type="checkbox" id="skipDuplicates" checked />
+        Skip duplicate files
+      </label>
+    </div>
+
+    <button id="sendBtn" disabled>🚀 EXTRACT & SEND</button>
+
+    <div class="progress-section" id="progressSection">
+      <div class="stats-grid">
+        <div class="stat"><div class="value" id="statTotal">0</div><div class="label">Total</div></div>
+        <div class="stat sent"><div class="value" id="statSent">0</div><div class="label">Sent</div></div>
+        <div class="stat failed"><div class="value" id="statFailed">0</div><div class="label">Failed</div></div>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="progress-stats">
+        <span id="progressText">Waiting...</span>
+        <span id="progressPercent">0%</span>
+      </div>
+      <div class="log" id="log"></div>
+    </div>
+  </div>
+
+  <div class="features">
+    <div class="feature"><span class="emoji">📦</span>All File Types</div>
+    <div class="feature"><span class="emoji">🔄</span>Nested Archives</div>
+    <div class="feature"><span class="emoji">🚫</span>Skip Duplicates</div>
+    <div class="feature"><span class="emoji">⚡</span>0.30s / File</div>
+    <div class="feature"><span class="emoji">🚀</span>24/7 Online</div>
+  </div>
+
+  <div class="faq">
+    <h2>❓ Frequently Asked Questions</h2>
+    <details>
+      <summary>What is Extract Sources?</summary>
+      <p>A free tool that extracts ALL files from ZIP archives (any extension) and sends them directly to your Discord channel via webhook. Nested ZIPs are fully supported.</p>
+    </details>
+    <details>
+      <summary>How do I use it?</summary>
+      <p>1. Enter your Discord Webhook URL<br>2. Upload a ZIP file<br>3. Click "EXTRACT & SEND"<br>4. Files are sent one by one with a 0.30s delay.</p>
+    </details>
+    <details>
+      <summary>What file types are supported?</summary>
+      <p>ALL file types are extracted and sent — .txt, .lua, .js, .py, .json, images, executables, anything inside the archive.</p>
+    </details>
+    <details>
+      <summary>What about duplicate files?</summary>
+      <p>By default, duplicate filenames (case-insensitive) are skipped — only the first occurrence is sent. You can disable this in the options.</p>
+    </details>
+    <details>
+      <summary>Is there a file size limit?</summary>
+      <p>Maximum archive size is ~100MB (Cloudflare Worker limit). Individual files must be under 25MB (Discord limit). For larger archives, split them up.</p>
+    </details>
+    <details>
+      <summary>Is this service free?</summary>
+      <p>✅ Yes! Completely free and runs 24/7 on Cloudflare Workers.</p>
+    </details>
+  </div>
+</div>
+
+<script>
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('fileInput');
+  const fileName = document.getElementById('fileName');
+  const dropText = document.getElementById('dropText');
+  const webhookInput = document.getElementById('webhook');
+  const sendBtn = document.getElementById('sendBtn');
+  const progressSection = document.getElementById('progressSection');
+  const progressFill = document.getElementById('progressFill');
+  const progressText = document.getElementById('progressText');
+  const progressPercent = document.getElementById('progressPercent');
+  const log = document.getElementById('log');
+  const statTotal = document.getElementById('statTotal');
+  const statSent = document.getElementById('statSent');
+  const statFailed = document.getElementById('statFailed');
+
+  let selectedFile = null;
+
+  webhookInput.value = localStorage.getItem('webhook') || '';
+  webhookInput.addEventListener('input', () => {
+    localStorage.setItem('webhook', webhookInput.value);
+    updateButton();
+  });
+
+  dropzone.addEventListener('click', () => fileInput.click());
+  dropzone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropzone.classList.add('dragover');
+  });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+  dropzone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropzone.classList.remove('dragover');
+    if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+  });
+  fileInput.addEventListener('change', (e) => {
+    if (e.target.files.length) handleFile(e.target.files[0]);
+  });
+
+  function handleFile(file) {
+    selectedFile = file;
+    fileName.textContent = `📎 ${file.name} (${formatBytes(file.size)})`;
+    dropText.textContent = 'Click or drag & drop to change';
+    updateButton();
+  }
+
+  function updateButton() {
+    const valid = webhookInput.value.startsWith('https://discord.com/api/webhooks/') && selectedFile;
+    sendBtn.disabled = !valid;
+  }
+
+  function formatBytes(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / 1024 / 1024).toFixed(2) + ' MB';
+  }
+
+  function addLog(text, type = 'info') {
+    const entry = document.createElement('div');
+    entry.className = `log-entry ${type}`;
+    const time = new Date().toLocaleTimeString();
+    entry.textContent = `[${time}] ${text}`;
+    log.appendChild(entry);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  sendBtn.addEventListener('click', async () => {
+    if (!selectedFile || !webhookInput.value) return;
+
+    sendBtn.disabled = true;
+    sendBtn.textContent = '⏳ PROCESSING...';
+    progressSection.classList.add('active');
+    log.innerHTML = '';
+    progressFill.style.width = '0%';
+    statTotal.textContent = '0';
+    statSent.textContent = '0';
+    statFailed.textContent = '0';
+
+    addLog('Uploading archive...', 'info');
+
+    const formData = new FormData();
+    formData.append('webhook', webhookInput.value);
+    formData.append('archive', selectedFile);
+    formData.append('delay', document.getElementById('delay').value);
+    formData.append('skipDuplicates', document.getElementById('skipDuplicates').checked);
+
+    try {
+      const res = await fetch('/extract', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(err.error || `HTTP ${res.status}`);
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        const lines = buffer.split('\n');
+        buffer = lines.pop();
+
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          try {
+            const msg = JSON.parse(line);
+            handleMessage(msg);
+          } catch (e) {
+            console.error('Parse error:', e);
+          }
+        }
+      }
+
+      addLog('✅ Done!', 'info');
+    } catch (err) {
+      addLog(`❌ Error: ${err.message}`, 'failed');
+    } finally {
+      sendBtn.disabled = false;
+      sendBtn.textContent = '🚀 EXTRACT & SEND';
+    }
+  });
+
+  let startTime = 0;
+
+  function handleMessage(msg) {
+    if (msg.type === 'start') {
+      startTime = Date.now();
+      statTotal.textContent = msg.total;
+      addLog(`Found ${msg.total} file(s). ${msg.duplicatesSkipped} duplicate(s) skipped.`, 'warn');
+    } else if (msg.type === 'progress') {
+      const pct = Math.round((msg.current / msg.total) * 100);
+      progressFill.style.width = pct + '%';
+      progressPercent.textContent = pct + '%';
+      progressText.textContent = `${msg.current} / ${msg.total}`;
+
+      if (msg.status === 'sent') {
+        statSent.textContent = msg.current;
+        addLog(`✓ ${msg.file} (${formatBytes(msg.size || 0)})`, 'sent');
+      } else {
+        statFailed.textContent = parseInt(statFailed.textContent) + 1;
+        addLog(`✗ ${msg.file} — ${msg.error}`, 'failed');
+      }
+    } else if (msg.type === 'done') {
+      const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+      addLog(`🎉 Complete! Sent ${msg.sent}, Failed ${msg.failed}, in ${elapsed}s`, 'info');
+      progressFill.style.width = '100%';
+      progressPercent.textContent = '100%';
+    } else if (msg.type === 'error') {
+      addLog(`❌ ${msg.message}`, 'failed');
+    }
+  }
+</script>
+</body>
+</html>
